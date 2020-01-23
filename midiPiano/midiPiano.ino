@@ -27,8 +27,8 @@ const uint8_t  button1, button2, button3, button4, button5, button6, button7, bu
 
 const uint8_t buttons[NUM_BUTTONS] = {button1, button2, button3, button4, button5, button6, button7, button8, button9, button10, button11, button12, button13, button14, button15, button16};
 
-const byte notePitches[NUM_BUTTONS] = {pitchC1, pitchD1b, pitchD1, pitchE1b, pitchE1, pitchF1, pitchG1b, pitchG1, pitchA1b, pitchA1,
-                    pitchB1b,  pitchB1, pitchC2, pitchD2b, pitchD2, pitchE2b};
+const byte notePitches[NUM_BUTTONS] = {pitchC4, pitchD4b, pitchD4, pitchE4b, pitchE4, pitchF4, pitchG4b, pitchG4, pitchA4b, pitchA4,
+                    pitchB4b,  pitchB4, pitchC4, pitchD4b, pitchD4, pitchE4b};
 
 //, pitchE2, pitchF2, pitchG2b, pitchG2, pitchA2b, pitchA2};
 
@@ -70,23 +70,23 @@ BYTES_VAL_T read_shift_regs(){
 
 void sendingMIDI (){
 
- pressedButtons = read_shift_regs();
-  
-  for(int i =0; i < NUM_BUTTONS; i++){
-      if(bitRead(pressedButtons, i) != bitRead(previousButtons,i)){
+/*for(int i =0; i < NUM_BUTTONS; i++){
+      //if(bitRead(pressedButtons, i) != bitRead(previousButtons,i)){
           if(bitRead(pressedButtons,i)){
-              bitWrite(previousButtons,i,1);
-              noteOn(0, notePitches[i], 1);
+              //bitWrite(previousButtons,i,1);
+              noteOn(0, notePitches[((i-14)*-1)], 1);
+              Serial.println(((i-14)*-1));
               MidiUSB.flush();
             }
             else{
-              bitWrite(previousButtons,i,0);
-              noteOff(0, notePitches[i],0);
+              //bitWrite(previousButtons,i,0);
+              noteOff(0, notePitches[((i-15)*-1)],0);
               MidiUSB.flush();  
             }
-        }
-    }  
+     //   }
+    }  */
 }
+
 
 void controlChange(byte channel, byte control, byte value) {
   midiEventPacket_t event = {0x0B, 0xB0 | channel, control, value};
@@ -131,31 +131,38 @@ void setup()
 
 void loop()
 {
-    /* Read the state of all zones.
-    */
- BYTES_VAL_T readReg = read_shift_regs();
+    
+
+  BYTES_VAL_T readReg = read_shift_regs();
+  for (int Q = 0; Q < DATA_WIDTH; Q++){
+    if(bitRead(readReg,Q)){
+        bitWrite(readReg,Q,0);
+      }else{
+        bitWrite(readReg,Q,1);
+        }
+  }
  
 
- for(int j = 0; j <= NUM_BUTTONS; j++){
-  if(bitRead(readReg,j)){
-    bitWrite(readReg,j,0);
-    }else{
-    bitWrite(readReg,j,1);      
+  if(readReg != oldPinValues){
+    
+    Serial.println("readReg");
+    Serial.println(readReg,BIN);
+    Serial.println("oldPinValues");
+    Serial.println(oldPinValues,BIN);
+    
+    for(int i =0; i < NUM_BUTTONS; i++){
+        if(bitRead(readReg,i)){
+          noteOn(0, notePitches[i], 120);
+          bitWrite(oldPinValues,i,1);
+          MidiUSB.flush(); 
+        }else{
+          noteOff(0, notePitches[i],120);
+          bitWrite(oldPinValues,i,0);
+          MidiUSB.flush();  
+        }
       }
   
+      //readReg = oldPinValues;
+      delay(100);
   }
-
-  
-
-    /* If there was a chage in state, display which ones changed.
-    */
-    if(readReg != oldPinValues)
-    {
-        //Serial.print("*Pin value change detected*\r\n");
-       Serial.println(readReg, BIN);
-        oldPinValues = readReg;
-          
-    }
-
-    delay(POLL_DELAY_MSEC);
 }
