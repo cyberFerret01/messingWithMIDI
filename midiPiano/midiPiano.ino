@@ -1,10 +1,10 @@
 
-#define NUMBER_OF_SHIFT_CHIPS   2
+#define NUMBER_OF_SHIFT_CHIPS   3
 #define DATA_WIDTH   NUMBER_OF_SHIFT_CHIPS * 8
 #define PULSE_WIDTH_USEC   5
 #define POLL_DELAY_MSEC   1
-#define BYTES_VAL_T unsigned int
-#define NUM_BUTTONS 16
+#define BYTES_VAL_T unsigned long
+#define NUM_BUTTONS 24
 
 #include "MIDIUSB.h"
 #include "PitchToNote.h"
@@ -23,14 +23,12 @@ BYTES_VAL_T pinValues;
 BYTES_VAL_T oldPinValues;
 
 
-const uint8_t  button1, button2, button3, button4, button5, button6, button7, button8, button9, button10, button11, button12, button13, button14, button15, button16;
+const uint8_t  button1, button2, button3, button4, button5, button6, button7, button8, button9, button10, button11, button12, button13, button14, button15, button16, button17, button18, button19, button20, button21, button22, button23, button24;
 
-const uint8_t buttons[NUM_BUTTONS] = {button1, button2, button3, button4, button5, button6, button7, button8, button9, button10, button11, button12, button13, button14, button15, button16};
+const uint8_t buttons[NUM_BUTTONS] = {button1, button2, button3, button4, button5, button6, button7, button8, button9, button10, button11, button12, button13, button14, button15, button16, button17, button18, button19, button20, button21, button22,button23, button24};
 
 const byte notePitches[NUM_BUTTONS] = {pitchC4, pitchD4b, pitchD4, pitchE4b, pitchE4, pitchF4, pitchG4b, pitchG4, pitchA4b, pitchA4,
-                    pitchB4b,  pitchB4, pitchC4, pitchD4b, pitchD4, pitchE4b};
-
-//, pitchE2, pitchF2, pitchG2b, pitchG2, pitchA2b, pitchA2};
+                    pitchB4b,  pitchB4, pitchC5, pitchD5b, pitchD5, pitchE5b, pitchE5, pitchF5, pitchG5b, pitchG5, pitchA5b, pitchA5, pitchA5b, pitchA5};
 
 
 
@@ -46,10 +44,13 @@ BYTES_VAL_T read_shift_regs(){
     delayMicroseconds(PULSE_WIDTH_USEC);
     digitalWrite(ploadPin, HIGH);
     digitalWrite(clockEnablePin, LOW);
+    delayMicroseconds(PULSE_WIDTH_USEC);
 
     /* Loop to read each bit value from the serial out line
      * of the SN74HC165N.
     */
+
+
     for(int i = 0; i < DATA_WIDTH; i++)
     {
         bitVal = digitalRead(dataPin);
@@ -64,7 +65,7 @@ BYTES_VAL_T read_shift_regs(){
         delayMicroseconds(PULSE_WIDTH_USEC);
         digitalWrite(clockPin, LOW);
     }
-        //Serial.println(bytesVal, BIN);
+
         return(bytesVal);
 }
 
@@ -78,9 +79,14 @@ void sendingMIDI (BYTES_VAL_T r){
         }
   }
 
+if(r != oldPinValues){
+
+      
+
      for(int i =0; i < NUM_BUTTONS; i++){
         if(bitRead(r,i)){
-          noteOn(0, notePitches[((i-15)*-1)], 120);
+          Serial.println(i);
+          noteOn(0, notePitches[((i-23)*-1)], 120);
           
           //Serial.print("playing ");
           //Serial.print(((i-15)*-1));
@@ -88,12 +94,12 @@ void sendingMIDI (BYTES_VAL_T r){
           bitWrite(oldPinValues,i,1);
           MidiUSB.flush(); 
         }else{
-          noteOff(0, notePitches[((i-15)*-1)],120);
+          noteOff(0, notePitches[((i-23)*-1)],120);
           bitWrite(oldPinValues,i,0);
           MidiUSB.flush();  
         }
       }
-
+}
 /*for(int i =0; i < NUM_BUTTONS; i++){
       //if(bitRead(pressedButtons, i) != bitRead(previousButtons,i)){
           if(bitRead(pressedButtons,i)){
@@ -156,11 +162,9 @@ void setup()
 void loop(){
   
     BYTES_VAL_T readReg = read_shift_regs();
-    
-    if(readReg != oldPinValues){
-      sendingMIDI(readReg);
-    }
- 
+
+    sendingMIDI(readReg);
+
       delay(100);
   
 }
