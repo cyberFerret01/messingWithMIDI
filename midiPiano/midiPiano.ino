@@ -65,7 +65,8 @@ BYTES_VAL_T read_shift_regs(){
         delayMicroseconds(PULSE_WIDTH_USEC);
         digitalWrite(clockPin, LOW);
     }
-
+    
+        Serial.println(bytesVal,BIN);
         return(bytesVal);
 }
 
@@ -165,6 +166,6 @@ void loop(){
 
     sendingMIDI(readReg);
 
-      delay(100);
+      delay( 20);
   
 }
