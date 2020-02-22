@@ -12,6 +12,12 @@ const uint8_t buttons[NUM_BUTTONS] = {button1, button2, button3, button4, button
 const byte notePitches[NUM_BUTTONS] = {pitchC1, pitchD1b, pitchD1, pitchE1b, pitchE1, pitchF1, pitchG1b, pitchG1, pitchA1b, pitchA1,
                     pitchB1b,  pitchB1, pitchC2, pitchD2b, pitchD2, pitchE2b, pitchE2, pitchF2, pitchG2b, pitchG2, pitchA2b, pitchA2};
 
+int ploadPin        = 8;  // Connects to Parallel load pin the 165
+int clockEnablePin  = 9;  // Connects to Clock Enable pin the 165
+int dataPin         = 11; // Connects to the Q7 pin the 165
+int clockPin        = 12; // Connects to the Clock pin the 165
+
+
 
 
 uint8_t pressedButtons = 0x00;
@@ -49,6 +55,7 @@ void readButtons ()
         noTone(8);
         }
     }
+    //Serial.println(pressedButtons,BIN);
 }
 
 void sendingMIDI ()
