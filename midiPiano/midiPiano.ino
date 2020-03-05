@@ -1,19 +1,19 @@
 
-#define NUMBER_OF_SHIFT_CHIPS   1
+#define NUMBER_OF_SHIFT_CHIPS   3
 #define DATA_WIDTH   NUMBER_OF_SHIFT_CHIPS * 8
 #define PULSE_WIDTH_USEC   5
 #define POLL_DELAY_MSEC   1
 #define BYTES_VAL_T unsigned long
-#define NUM_BUTTONS 24
+#define NUM_BUTTONS 22
 
 #include "MIDIUSB.h"
 #include "PitchToNote.h"
 
 
-int ploadPin        = 8;  // Connects to Parallel load pin the 165
-int clockEnablePin  = 9;  // Connects to Clock Enable pin the 165
-int dataPin         = 11; // Connects to the Q7 pin the 165
-int clockPin        = 12; // Connects to the Clock pin the 165
+int ploadPin        = 15;  // Connects to Parallel load pin the 165
+int clockEnablePin  = 14;  // Connects to Clock Enable pin the 165
+int dataPin         = 16; // Connects to the Q7 pin the 165
+int clockPin        = 10; // Connects to the Clock pin the 165
 
 
 uint8_t pressedButtons = 0x00;
@@ -25,7 +25,11 @@ BYTES_VAL_T oldPinValues;
 
 const uint8_t  button1, button2, button3, button4, button5, button6, button7, button8;
 
+// button8,button7,button6,button5,button4,button3,button2,button1,button-0
+
 const uint8_t buttons[NUM_BUTTONS] = {button1, button2, button3, button4, button5, button6, button7, button8};
+
+//pitchG4 /*placeholder due to soldering error*/   ,pitchG4,pitchG4b,pitchF4,pitchE4,pitchE4b,pitchD4,pitchD4b,pitchC4
 
 const byte notePitches[NUM_BUTTONS] = {pitchC4, pitchD4b, pitchD4, pitchE4b, pitchE4, pitchF4, pitchG4b, pitchG4};
 
@@ -65,7 +69,7 @@ BYTES_VAL_T read_shift_regs(){
         digitalWrite(clockPin, LOW);
     }
     
-        Serial.println(bytesVal,BIN);
+  //      Serial.println(bytesVal,BIN);
         return(bytesVal);
 }
 
@@ -85,7 +89,7 @@ if(r != oldPinValues){
 
      for(int i =0; i < NUM_BUTTONS; i++){
         if(bitRead(r,i)){
-          Serial.println(i);
+         // Serial.println(i);
           noteOn(0, notePitches[((i-23)*-1)], 120);
           
           //Serial.print("playing ");
@@ -160,10 +164,14 @@ void setup()
 }
 
 void loop(){
-  
+
     BYTES_VAL_T readReg = read_shift_regs();
 
-    sendingMIDI(readReg);
+    if(readReg != oldPinValues){
+Serial.println(readReg,BIN);
+oldPinValues = readReg;
+}
+    //sendingMIDI(readReg);
 
       delay( 20);
   
