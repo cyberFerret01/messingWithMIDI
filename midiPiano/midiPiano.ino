@@ -4,17 +4,19 @@
 #define PULSE_WIDTH_USEC   5
 #define POLL_DELAY_MSEC   1
 #define BYTES_VAL_T unsigned long
-#define NUM_BUTTONS 22
+#define NUM_BUTTONS 25
+
 
 #include "MIDIUSB.h"
-#include "PitchToNote.h"
+//#include "pitches.h"
 
 
 int ploadPin        = 15;  // Connects to Parallel load pin the 165
 int clockEnablePin  = 14;  // Connects to Clock Enable pin the 165
 int dataPin         = 16; // Connects to the Q7 pin the 165
 int clockPin        = 10; // Connects to the Clock pin the 165
-
+int intensity =0;
+int toggle =9;
 
 uint8_t pressedButtons = 0x00;
 uint8_t previousButtons = 0x00;
@@ -23,18 +25,15 @@ BYTES_VAL_T pinValues;
 BYTES_VAL_T oldPinValues;
 
 
-const uint8_t  button1, button2, button3, button4, button5, button6, button7, button8;
+const uint8_t  button0, button1, button2, button3, button4, button5, button6, button7, button8, button9, button10, button11, button12, button13, button14, button15, button16, button17, button18, button19, button20, button21, button22, button23, button24;
 
-// button8,button7,button6,button5,button4,button3,button2,button1,button-0
+const uint8_t buttons[NUM_BUTTONS] = {button0,button1, button2, button3, button4, button5, button6, button7, button8, button9, button10, button11, button12, button13, button14, button15, button16, button17, button18, button19, button20, button21, button22,button23, button24};
 
-const uint8_t buttons[NUM_BUTTONS] = {button1, button2, button3, button4, button5, button6, button7, button8};
-
-//pitchG4 /*placeholder due to soldering error*/   ,pitchG4,pitchG4b,pitchF4,pitchE4,pitchE4b,pitchD4,pitchD4b,pitchC4
-
-const byte notePitches[NUM_BUTTONS] = {pitchC4, pitchD4b, pitchD4, pitchE4b, pitchE4, pitchF4, pitchG4b, pitchG4};
-
-
-
+const byte notePitches[NUM_BUTTONS] = {
+  
+  35, 36, 37, 38, 39, 40, 41, 42, 43,44,45, 46, 47, 48, 49, 50, 51, 52,
+  53, 54, 55, 56, 57
+};
 
 BYTES_VAL_T read_shift_regs(){
     long bitVal;
@@ -69,41 +68,70 @@ BYTES_VAL_T read_shift_regs(){
         digitalWrite(clockPin, LOW);
     }
     
-  //      Serial.println(bytesVal,BIN);
+        
         return(bytesVal);
 }
 
-void sendingMIDI (BYTES_VAL_T r){
 
-  for (int Q = 0; Q < DATA_WIDTH; Q++){
-    if(bitRead(r,Q)){
-        bitWrite(r,Q,0);
-      }else{
-        bitWrite(r,Q,1);
-        }
+  void playSpeaker(BYTES_VAL_T r){
+    
+    if(r == 0 || r != oldPinValues){
+      noTone(A2);
+    }
+    
+    for(int i =0; i < NUM_BUTTONS; i++){
+      if(bitRead(r,i)){
+        Serial.println();
+        
+        //noteOn(0, notePitches[((i-23)*-1)], intensity);
+        tone(A2,notePitches[((i-23)*-1)]);
+        
+        Serial.print("playing ");
+        Serial.print(notePitches[((i-23)*-1)]);
+        Serial.println();
+        bitWrite(oldPinValues,i,1);
+      }
+    
+    }
+  
   }
 
-if(r != oldPinValues){
-
-      
-
-     for(int i =0; i < NUM_BUTTONS; i++){
-        if(bitRead(r,i)){
-         // Serial.println(i);
-          noteOn(0, notePitches[((i-23)*-1)], 120);
-          
-          //Serial.print("playing ");
-          //Serial.print(((i-15)*-1));
-          
-          bitWrite(oldPinValues,i,1);
-          MidiUSB.flush(); 
+  void sendingMIDI (BYTES_VAL_T r, byte intensity){
+  /*
+    for (int Q = 0; Q < DATA_WIDTH; Q++){
+      if(bitRead(r,Q)){
+          bitWrite(r,Q,0);
         }else{
-          noteOff(0, notePitches[((i-23)*-1)],120);
-          bitWrite(oldPinValues,i,0);
-          MidiUSB.flush();  
+          bitWrite(r,Q,1);
+          }
+    }
+  */
+  if(r != oldPinValues){
+  
+        Serial.println(r,BIN);
+        oldPinValues = r;
+  
+       for(int i =0; i < NUM_BUTTONS; i++){
+          if(bitRead(r,i)){
+            Serial.println();
+            
+            noteOn(0, notePitches[((i-23)*-1)], intensity);
+            //tone(A2,notePitches[((i-23)*-1)]);
+            
+            Serial.print("playing ");
+            Serial.print(notePitches[((i-23)*-1)]);
+            Serial.println();
+            bitWrite(oldPinValues,i,1);
+            MidiUSB.flush(); 
+          }else{
+            noteOff(0, notePitches[((i-23)*-1)],intensity);
+            //noTone(A2);
+            
+            bitWrite(oldPinValues,i,0);
+            MidiUSB.flush();  
+          }
         }
-      }
-}
+  }
 /*for(int i =0; i < NUM_BUTTONS; i++){
       //if(bitRead(pressedButtons, i) != bitRead(previousButtons,i)){
           if(bitRead(pressedButtons,i)){
@@ -139,6 +167,7 @@ void noteOff(byte channel, byte pitch, byte velocity) {
 
 void setup()
 {
+  pinMode(toggle,INPUT_PULLUP);
 
     for(int z = 0; z < NUM_BUTTONS; z++){
       pinMode (buttons[z], INPUT_PULLUP);   
@@ -164,15 +193,25 @@ void setup()
 }
 
 void loop(){
+  
+BYTES_VAL_T readReg = read_shift_regs();
+  if(oldPinValues != readReg) {
 
-    BYTES_VAL_T readReg = read_shift_regs();
+    //intensity = analogRead(A0);
 
-    if(readReg != oldPinValues){
-Serial.println(readReg,BIN);
-oldPinValues = readReg;
-}
-    //sendingMIDI(readReg);
+    intensity = map(analogRead(A0), 0,1023,0,127);
 
-      delay( 20);
+      if(toggle){
+        sendingMIDI(readReg,intensity);
+      }
+    Serial.println(readReg,BIN);
+  }
+  
+    if(!toggle){
+        playSpeaker(readReg);
+      }
+      
+     oldPinValues = readReg;
+      delay(40);
   
 }
